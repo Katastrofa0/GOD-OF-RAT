@@ -1,0 +1,94 @@
+# EDUCATIONAL PURPOSE ONLY - DISCLAIMER
+
+## Legal Notice
+
+This software is provided **SOLELY FOR EDUCATIONAL AND RESEARCH PURPOSES**.
+
+---
+
+## By using, downloading, or executing this software, you explicitly agree to the following terms:
+
+### 1. Authorized Use Only
+
+This software may ONLY be used on:
+- Systems that you personally own
+- Systems where you have obtained **EXPLICIT WRITTEN PERMISSION** from the owner
+- Isolated laboratory environments disconnected from production networks
+
+### 2. Prohibited Activities (MISUSE)
+
+The following activities are STRICTLY PROHIBITED:
+
+-[X] Installing on any computer without explicit owner consent
+-[X] Stealing, harvesting, or collecting credentials, passwords, or personal data
+-[X] Creating botnets, malware networks, or distributed attacks
+-[X] Any commercial exploitation or resale
+-[X] Bypassing security measures without authorization
+-[X] Espionage, surveillance, or monitoring of individuals without consent
+-[X] Using as part of any illegal enterprise or criminal activity
+
+### 3. Legal Compliance
+
+You are **SOLELY RESPONSIBLE** for complying with all applicable laws, including but not limited to:
+
+| Jurisdiction | Applicable Laws |
+|--------------|-----------------|
+| United States | Computer Fraud and Abuse Act (CFAA), Electronic Communications Privacy Act (ECPA) |
+| European Union | GDPR, Cybercrime Directive |
+| United Kingdom | Computer Misuse Act 1990 |
+| Germany | StGB (German Criminal Code) § 202a-c |
+| Other countries | Local cybercrime and computer misuse legislation |
+
+### 4. No Warranty
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+### 5. Limitation of Liability
+
+IN NO EVENT SHALL THE AUTHOR, COPYRIGHT HOLDERS, OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+### 6. Indemnification
+
+You agree to indemnify, defend, and hold harmless the author from and against any and all claims, liabilities, damages, losses, costs, expenses, or fees (including reasonable attorneys' fees) arising from your use or misuse of this software or violation of these terms.
+
+---
+
+## ✓ Legitimate Uses
+
+This software is designed for:
+
+- **Learning** about ECDH and AES encryption protocols
+- **Understanding** C2 (Command & Control) communication patterns
+- **Security research** in controlled environments
+- **Testing** your own systems with proper authorization
+- **Educational demonstrations** in cybersecurity courses
+- **Studying** Windows API interactions and security mechanisms
+
+---
+
+## ! Acknowledgment of Understanding
+
+**By downloading, cloning, forking, or using this software in any way, you certify that:**
+
+1. You have read and understood this entire disclaimer
+2. You will only use the software for legitimate educational purposes
+3. You will comply with all applicable laws
+4. You accept full responsibility for your actions
+5. You will not hold the author liable for any consequences of your use
+
+
+---
+
+## Author Contact
+
+For legitimate inquiries regarding:
+- Educational collaboration
+- Security research partnerships
+- Bug reports (for educational features)
+
+Please open an issue on GitHub.
+
+**! DO NOT contact the author for help with illegal activities.**
+
+---
+**! Use Responsibly. Learn Ethically. Protect.**
