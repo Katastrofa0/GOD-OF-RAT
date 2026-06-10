@@ -1,0 +1,14 @@
+websockets
+aiofiles
+pycryptodome
+PyQt6
+Pillow
+psutil
+mss
+opencv-python
+numpy
+pynput
+requests
+python-telegram-bot>=20,<21
+pyperclip
+pywin32
