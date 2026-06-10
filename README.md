@@ -24,6 +24,19 @@
   <img src="https://img.shields.io/github/stars/Katastrofa0/GOD-OF-RAT?style=flat&color=9c2e2e">
 </p>
 
+<p align="center">
+  <sub><i>I made it totally free for you guys, and would appreciate any help (not for coffee, but first car)</i></sub>
+</p>
+
+<p align="center">
+  <img src="icons/support.png" width="60"><br>
+  <sub><sup><small><b>XMR</b></small></sup></sub>
+</p>
+
+<p align="center">
+  <sub><sup><i>44mVG1Uy1dsDSdnjTtbQ5CAVKRT1wqQsF1LgRPkK7ED6gHWMU4za3GrQo82NvnpbfkBZFnKQm3ybPemj1ZAaNAsyL2DfVhq</i></sup></sub><br>
+</p>
+
 ---
 
 <p align="center">
@@ -66,16 +79,19 @@ git clone https://github.com/Katastrofa0/GOD-OF-RAT.git
 cd GOD-OF-RAT
 pip install -r requirements.txt
 ```
-If you encountered some PyAudio trouble, install it like this:
-```bash
-pip install pipwin
-pipwin install pyaudio
-```
 ```bash
 python server.py [--aes-key '$aeskey']  # Start server
 python controller.py  # Launch GUI (another terminal)
 
 # Make sure encryption.py is in the same directory as server.py
+```
+If you encountered some PyAudio & Crypto trouble, install it like this:
+```bash
+pip install pipwin
+pipwin install pyaudio
+
+pip uninstall crypto pycrypto
+pip install pycryptodome
 ```
 <p align="center">
   <b>Comprehensive documentation with setup instructions and detailed module descriptions is available here:</b>
@@ -88,6 +104,6 @@ python controller.py  # Launch GUI (another terminal)
 
 <p align="center">
   <a href="https://star-history.com/#Katastrofa0/GOD-OF-RAT&Date">
-    <img src="https://api.star-history.com/svg?repos=Katastrofa0/GOD-OF-RAT&type=Date&theme=dark" width="880">
+    <img src="https://api.star-history.com/svg?repos=Katastrofa0/GOD-OF-RAT&type=Date&theme=dark" width="780">
   </a>
 </p>
