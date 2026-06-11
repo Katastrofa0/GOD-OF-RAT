@@ -48,21 +48,22 @@
 </p>
 
 
-### KEY FEATURES
+### ◈ WHAT YOU GET
 
 | Category | Capabilities |
 | :--- | :--- |
-| **Async C2 Core** | Non-blocking WebSocket server built on Python Asyncio — handles hundreds of agents simultaneously. |
-| **Interactive Agent Builder** | GUI-powered payload generator. Select modules to include/exclude, inject AES keys, set custom icons, spoof file metadata, enable Anti-VM, add size to agent, and choose persistence method — all before compilation. |
-| **Telegram Bot Multiplexer** | Run multiple Telegram bots simultaneously. Isolated session routing per user — perfect for collaborative red teams. |
-| **AES-256 Encryption** | Full traffic encryption between server, controller, and agents. Optional plain-text mode for debugging. |
-| **Remote Shell** | Interactive reverse shell with command history. Execute any system command in real time. |
-| **File System Manager** | Remote file browser with upload (drag & drop + chunked), download, delete, and execute capabilities. |
-| **Live Surveillance** | Live screen stream, webcam streaming, microphone capture, screenshot, keylogger (timed or continuous). |
-| **Credentials Harvesting** | Wi-Fi passwords, browser secrets (Chrome/Edge/Firefox/Brave), OpenVPN, Telegram tdata session extraction. |
-| **Evasion & Persistence** | UAC Bypass (Fodhelper), disable Defender / Firewall, Anti-VM detection, Event Log cleaner. Juicy persistence techniques: Registry, Startup Folder, Scheduled Task, WMI, Windows Service. |
-| **Windows Management** | Remote Registry Editor, Service manager, Scheduled Tasks, WMI subscriptions, Process manager. |
-| **Fun Modules** | Screen zoom, mouse inverter, drunk mouse, window shake, mouse trail ghosts, persistent alert boxes, disabling Task Manager, and more. |
+| **Async C2 Core** | A Python asyncio server that handles hundreds of agents at once. It's fast, stable, and won't choke under load. |
+| **Agent Builder** | A simple GUI to build your payload. Pick which modules you want, add an AES key, change the icon or COPY icon from other's EXE, fake the file metadata, turn on Anti‑VM protection, pad the file size, or set up automatic persistence. Everything happens before you click compile. |
+| **Telegram Bot Multiplexer** | You can run several Telegram bots at the same time. Each user gets their own isolated session, which makes team work clean and organized. |
+| **AES‑256 Encryption** | All traffic between the server, controller, and agents is encrypted. If you just want to test things, you can switch to plain text mode. |
+| **Remote Shell** | An interactive command line that works exactly like your local terminal. Execute any system command and see the output in real time. |
+| **File Manager** | Browse remote files, upload by dragging and dropping, download anything, delete files, or run executables. Folders are automatically zipped before upload. So satisfying to use. |
+| **Live Surveillance** | Stream the target's screen live, watch through their webcam, listen to their microphone, take screenshots, or log every keystroke either continuously or for a set amount of time. |
+| **Best Keylogger** | The keylogger is one of the best parts of this framework. Supports absolutely any keyboard layout. Clean, readable output without garbage or extra symbols.  |
+| **Credentials Harvesting** | Extract saved Wi‑Fi passwords, browser logins from Chrome, Edge, Firefox, and Brave, OpenVPN credentials, and whole Telegram session folders. |
+| **Evasion and Persistence** | Bypass UAC using the Fodhelper trick. Disable Windows Defender, turn off the firewall, avoid virtual machine detection, and clear event logs. To maintain access, you can use Registry autorun, Startup folder shortcuts, Scheduled Tasks, WMI event subscriptions, or install as a Windows service. |
+| **Windows Management** | Edit the registry remotely, manage services, view scheduled tasks, control WMI subscriptions, and kill or monitor processes. |
+| **Fun Modules** | Zoom the screen, invert mouse movement, make the mouse act drunk, shake windows, leave ghost trails behind the cursor, show endless alert popups, or disable the Task Manager. There's more where that came from. |
 <p align="center">
 <sub>Feel free to submit PRs, suggest new modules, or improve existing ones.</sub>
 </p>
