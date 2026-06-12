@@ -94,6 +94,12 @@ pipwin install pyaudio
 pip uninstall crypto pycrypto
 pip install pycryptodome
 ```
+
+Also For best icon extraction experience, download and install VC_redist:
+```bash
+https://aka.ms/vs/17/release/vc_redist.x64.exe
+```
+
 <p align="center">
   <b>Comprehensive documentation with setup instructions and detailed module descriptions is available here:</b>
 </p>
