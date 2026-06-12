@@ -3,6 +3,7 @@ websocket
 websocket-client
 aiofiles
 pycryptodome
+pyinstaller
 PyQt6
 Pillow
 psutil
