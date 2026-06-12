@@ -1,5 +1,4 @@
 websockets
-websocket
 websocket-client
 aiofiles
 pycryptodome
