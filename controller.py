@@ -6030,8 +6030,8 @@ class TelegramTDataDialog(QDialog):
         self.folders = folders
         
         if not folders:
-            self.status_label.setText("[!] No Telegram tdata folders found!")
-            self.status_label.setStyleSheet("color: #ff6666; padding: 5px;")
+            self.bottom_status.setText("[!] No Telegram tdata folders found!")
+            self.bottom_status.setStyleSheet("color: #ff6666; padding: 5px;")
             self.folders_list.addItem("No Telegram tdata folders found on this system")
 
             return
