@@ -7,9 +7,7 @@ from PyQt6.QtGui import *
 
 
 def resource_path(relative_path):
-
     try:
-
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
@@ -27,10 +25,7 @@ class LoginDialog(QDialog):
     def __init__(self, default_ip=None, default_port=None, default_token=None, default_aes_key=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("GodOfRAT")
-        
-
-        self.setFixedWidth(480) 
-        
+        self.setFixedWidth(480)
         self.setModal(True)
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.MSWindowsFixedSizeDialogHint)
         
@@ -39,11 +34,9 @@ class LoginDialog(QDialog):
         self.default_token = default_token
         self.default_aes_key = default_aes_key
         
-
         self.base_dir = get_base_dir()
         self.config_file = os.path.join(self.base_dir, "controller_config.json")
         
-
         self.icon_path = resource_path(os.path.join("icons", "rat_ico.png"))
         self.word_path = resource_path(os.path.join("icons", "word.png"))
         
@@ -53,7 +46,14 @@ class LoginDialog(QDialog):
         self.load_settings()
         self.init_ui()
         
+    def _safe_str(self, value):
+
+        if value is None or value is ...:
+            return ""
+        return str(value)
+        
     def load_settings(self):
+
         self.saved_ip = "127.0.0.1"
         self.saved_port = "8081"
         self.saved_token = ""
@@ -61,29 +61,47 @@ class LoginDialog(QDialog):
         self.saved_remember = False
         self.saved_aes_enabled = False
         
-        if self.default_token:
-            self.saved_token = self.default_token
-        if self.default_ip:
-            self.saved_ip = self.default_ip
-        if self.default_port:
+        
+        if self.default_token is not None and self.default_token is not ...:
+            self.saved_token = str(self.default_token)
+        if self.default_ip is not None and self.default_ip is not ...:
+            self.saved_ip = str(self.default_ip)
+        if self.default_port is not None and self.default_port is not ...:
             self.saved_port = str(self.default_port)
-        if self.default_aes_key:
-            self.saved_aes_key = self.default_aes_key
+        if self.default_aes_key is not None and self.default_aes_key is not ...:
+            self.saved_aes_key = str(self.default_aes_key)
             self.saved_aes_enabled = True
         
+
         try:
-            if not any([self.default_ip, self.default_port, self.default_token, self.default_aes_key]):
-                if os.path.exists(self.config_file):
-                    with open(self.config_file, 'r', encoding='utf-8') as f:
-                        config = json.load(f)
-                        self.saved_ip = config.get("ip", "127.0.0.1")
-                        self.saved_port = str(config.get("port", "8081"))
-                        self.saved_token = config.get("token", "")
-                        self.saved_aes_key = config.get("aes_key", "")
-                        self.saved_aes_enabled = config.get("aes_enabled", False)
-                        self.saved_remember = config.get("remember", False)
-        except Exception:
-            pass
+           
+            has_args = any([
+                self.default_ip is not None and self.default_ip is not ...,
+                self.default_port is not None and self.default_port is not ...,
+                self.default_token is not None and self.default_token is not ...,
+                self.default_aes_key is not None and self.default_aes_key is not ...
+            ])
+            
+            if not has_args and os.path.exists(self.config_file):
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    
+                    ip_val = config.get("ip")
+                    self.saved_ip = self._safe_str(ip_val) if ip_val is not None else "127.0.0.1"
+                    
+                    port_val = config.get("port")
+                    self.saved_port = self._safe_str(port_val) if port_val is not None else "8081"
+                    
+                    token_val = config.get("token")
+                    self.saved_token = self._safe_str(token_val) if token_val is not None else ""
+                    
+                    aes_val = config.get("aes_key")
+                    self.saved_aes_key = self._safe_str(aes_val) if aes_val is not None else ""
+                    
+                    self.saved_aes_enabled = bool(config.get("aes_enabled", False))
+                    self.saved_remember = bool(config.get("remember", False))
+        except Exception as e:
+            print(f"Error loading config: {e}")
         
     def init_ui(self):
         self.setStyleSheet("""
@@ -115,11 +133,9 @@ class LoginDialog(QDialog):
         self.main_layout.setSpacing(10)
         self.main_layout.setContentsMargins(30, 15, 30, 25)
         
-
+        # HEADER
         header_container = QLabel()
-        
-        canvas_w, canvas_h = 500, 230 
-        
+        canvas_w, canvas_h = 500, 230
         pixmap = QPixmap(canvas_w, canvas_h)
         pixmap.fill(Qt.GlobalColor.transparent)
         
@@ -127,34 +143,25 @@ class LoginDialog(QDialog):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         
-
         if os.path.exists(self.icon_path):
             logo = QPixmap(self.icon_path)
             l_size = 85
             logo_scaled = logo.scaled(l_size, l_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             painter.drawPixmap((canvas_w - logo_scaled.width()) // 2, 0, logo_scaled)
-            
-
+        
         if os.path.exists(self.word_path):
             word_img = QPixmap(self.word_path)
-            
-
-            w_width = 480  
+            w_width = 480
             word_scaled = word_img.scaled(w_width, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            
-
             painter.drawPixmap((canvas_w - word_scaled.width()) // 2, 80, word_scaled)
         
         painter.end()
         header_container.setPixmap(pixmap)
         header_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
         self.main_layout.addWidget(header_container)
-        
-
         self.main_layout.addSpacing(10)
         
-
+        # FIELDS
         self.main_layout.addWidget(QLabel("server"))
         self.ip_input = QLineEdit()
         self.ip_input.setText(self.saved_ip)
@@ -182,9 +189,12 @@ class LoginDialog(QDialog):
         self.aes_key_input.setPlaceholderText("AES Secret Key")
         self.aes_key_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.aes_key_input.setVisible(self.saved_aes_enabled)
-        if self.saved_aes_key:
-            self.aes_key_input.setText(self.saved_aes_key)
+        self.aes_key_input.setText(self.saved_aes_key)
         self.main_layout.addWidget(self.aes_key_input)
+
+        self.ssl_checkbox = QCheckBox("SSL/TLS (wss://)")
+        self.ssl_checkbox.setChecked(False)
+        self.main_layout.addWidget(self.ssl_checkbox)
         
         self.remember_checkbox = QCheckBox("remember settings")
         self.remember_checkbox.setChecked(self.saved_remember)
@@ -232,18 +242,30 @@ class LoginDialog(QDialog):
             pass
 
     def on_connect(self):
-        ip, port, token = self.ip_input.text().strip(), self.port_input.text().strip(), self.token_input.text().strip()
+        ip = self.ip_input.text().strip()
+        port = self.port_input.text().strip()
+        token = self.token_input.text().strip()
+        
         if not ip or not token:
             self.status_label.setText("fill all fields")
             return
+        
         try:
             self.server_port = int(port)
-            self.server_ip, self.auth_token = ip, token
+            self.server_ip = ip
+            self.auth_token = token
             self.aes_key = self.aes_key_input.text().strip() if self.aes_checkbox.isChecked() else None
+            self.use_ssl = self.ssl_checkbox.isChecked()
             self.save_settings()
             self.accept()
         except Exception:
             self.status_label.setText("invalid port")
 
     def get_connection_info(self):
-        return {"ip": self.server_ip, "port": self.server_port, "token": self.auth_token, "aes_key": self.aes_key}
+        return {
+            "ip": self.server_ip,
+            "port": self.server_port,
+            "token": self.auth_token,
+            "aes_key": self.aes_key,
+            "use_ssl": self.use_ssl
+        }

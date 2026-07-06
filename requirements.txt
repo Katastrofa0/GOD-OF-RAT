@@ -1,8 +1,8 @@
 websockets
-websocket-client
 aiofiles
-pycryptodome
 pyinstaller
+websocket-client
+pycryptodome
 PyQt6
 Pillow
 psutil
@@ -14,4 +14,6 @@ requests
 python-telegram-bot>=20,<21
 pyperclip
 pywin32
+pywebview
+cryptography
 pyaudio

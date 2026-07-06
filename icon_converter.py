@@ -17,8 +17,7 @@ except ImportError:
     pass
 
 def extract_icon_from_exe(exe_path):
-    
-    # Method 1: win32gui (if Exist)
+
     if HAS_WIN32GUI:
         try:
             large, small = win32gui.ExtractIconEx(exe_path, 0)
