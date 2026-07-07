@@ -153,8 +153,7 @@ class DiscordTokenManager:
         from datetime import datetime
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = os.path.join(output_dir, f"{prefix}_{timestamp}.txt")
-        
-        # Удаляем дубликаты
+
         seen = set()
         unique = []
         for t in tokens:
